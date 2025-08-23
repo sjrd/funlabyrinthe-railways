@@ -14,11 +14,14 @@ object Railways extends Module:
   
   override protected def createComponents()(using Universe): Unit =
     val railsCreator = new RailsCreator
+    val railsLightCreator = new RailsLightCreator
     val locomotiveCreator = new LocomotiveCreator
     val carriageCreator = new CarriageCreator
   end createComponents
 
   override protected def startGame()(using universe: Universe): Unit =
+    for light <- universe.components[RailsLight] do
+      light.startGame()
     for locomotive <- universe.components[Locomotive] do
       locomotive.startGame()
   end startGame
@@ -99,6 +102,62 @@ class Rails(using ComponentInit) extends Ground derives Reflector:
   }
 end Rails
 
+class RailsLightCreator(using ComponentInit) extends ComponentCreator:
+  type CreatedComponentType = RailsLight
+
+  category = ComponentCategory("rails", "Rails")
+
+  icon += "Rails/LightOffNorth"
+  icon += "Creators/Creator"
+
+  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
+    new RailsLight()
+end RailsLightCreator
+
+class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives Reflector:
+  category = ComponentCategory("rails", "Rails")
+
+  var delay: Int = 0
+  var delayBeforeNextLight: Int = 0
+  var nextLight: Option[RailsLight] = None
+  var mirror: Option[RailsLight] = None
+
+  offPainter = offPainter.empty + "Rails/LightOffNorth"
+  onPainter = onPainter.empty + "Rails/LightOnNorth"
+
+  @noinspect
+  val turnLightOnOffQueue = TimerQueue[Boolean] { value =>
+    if value then
+      turnLightOn()
+    else
+      turnLightOff()
+  }
+
+  override def reflect() = autoReflect[RailsLight]
+
+  def startGame(): Unit =
+    if isOn then
+      turnLightOn()
+  end startGame
+
+  def turnLightOn(): Unit =
+    isOn = true
+    if delay > 0 then
+      turnLightOnOffQueue.schedule(delay, false)
+    mirror.foreach(_.turnLightOn())
+  end turnLightOn
+
+  def turnLightOff(): Unit =
+    isOn = false
+    for next <- nextLight do
+      next.turnLightOnOffQueue.schedule(delayBeforeNextLight, true)
+    mirror.foreach(_.turnLightOff())
+  end turnLightOff
+
+  override def execute(context: MoveContext): Unit =
+    () // disable the normal Switch behavior
+end RailsLight
+
 class LocomotiveCreator(using ComponentInit) extends ComponentCreator:
   type CreatedComponentType = Locomotive
 
@@ -163,7 +222,14 @@ class Locomotive(using ComponentInit) extends PosComponent derives Reflector:
     if !enabled then
       return ()
 
-    // TODO Check the light
+    // Check the light
+    pos().effect match
+      case light: RailsLight if !light.isOn =>
+        scheduleNextMove(delay)
+        return
+      case _ =>
+        ()
+
     if false then
       scheduleNextMove(delay)
       return ()
