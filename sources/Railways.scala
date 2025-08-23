@@ -111,7 +111,7 @@ class LocomotiveCreator(using ComponentInit) extends ComponentCreator:
     new Locomotive()
 end LocomotiveCreator
 
-class Locomotive(using ComponentInit) extends PosComponent with FrameUpdates derives Reflector:
+class Locomotive(using ComponentInit) extends PosComponent derives Reflector:
   /** The current direction. */
   var direction: Direction = Direction.North
   /** The previous direction, used to draw with the appropriate angle. */
@@ -129,8 +129,9 @@ class Locomotive(using ComponentInit) extends PosComponent with FrameUpdates der
   var moving: Boolean = false
   @noinspect
   var startScheduled: Boolean = false
+
   @noinspect
-  var nextMoveDeadline: Option[Long] = None
+  val nextMoveQueue = TimerQueue[Unit](_ => tryMove())
 
   painter += "Trains/LocomotiveNorth"
   category = ComponentCategory("trains", "Trains")
@@ -147,17 +148,11 @@ class Locomotive(using ComponentInit) extends PosComponent with FrameUpdates der
   end startGame
 
   def scheduleNextMove(delay: Long): Unit =
-    nextMoveDeadline = Some(universe.tickCount + delay)
+    nextMoveQueue.schedule(delay, ())
 
-  override def frameUpdate(ticksSinceLastFrame: Long): Unit =
-    nextMoveDeadline match
-      case Some(deadline) if universe.tickCount >= deadline =>
-        nextMoveDeadline = None
-        for pos <- position do
-          tryMove(pos)
-      case _ =>
-        ()
-  end frameUpdate
+  private def tryMove(): Unit =
+    for pos <- position do
+      tryMove(pos)
 
   def tryMove(pos: SquareRef): Unit =
     // Check that we are currently on rails
