@@ -14,6 +14,7 @@ object Railways extends Module:
   
   override protected def createComponents()(using Universe): Unit =
     val railsCreator = new RailsCreator
+    val railsSwitchCreator = new RailsSwitchCreator
     val railsLightCreator = new RailsLightCreator
     val locomotiveCreator = new LocomotiveCreator
     val carriageCreator = new CarriageCreator
@@ -27,11 +28,9 @@ object Railways extends Module:
   end startGame
 
   def containingCarriage(using Universe): Attribute[Option[Carriage]] = myAttributeByID("containingCarriage")
-
   def railsCreator(using Universe): RailsCreator = myComponentByID("railsCreator")
-
+  def railsSwitchCreator(using Universe): RailsSwitchCreator = myComponentByID("railsSwitchCreator")
   def locomotiveCreator(using Universe): LocomotiveCreator = myComponentByID("locomotiveCreator")
-
   def carriageCreator(using Universe): CarriageCreator = myComponentByID("carriageCreator")
 end Railways
 
@@ -102,6 +101,47 @@ class Rails(using ComponentInit) extends Ground derives Reflector:
   }
 end Rails
 
+class RailsSwitchCreator(using ComponentInit) extends ComponentCreator:
+  type CreatedComponentType = RailsSwitch
+
+  category = ComponentCategory("rails", "Rails")
+
+  icon += "Buttons/SwitchOff"
+  icon += "Creators/Creator"
+
+  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
+    new RailsSwitch()
+end RailsSwitchCreator
+
+/** A switch that flips the direction of a target `Rails`. */
+class RailsSwitch(using ComponentInit) extends Switch derives Reflector:
+  category = ComponentCategory("rails", "Rails")
+
+  var targetRails: Option[Rails] = None
+  var onDirection: Option[Direction] = None
+  var offDirection: Option[Direction] = None
+
+  override def reflect() = autoReflect[RailsSwitch]
+
+  override def switchOn(context: MoveContext): Unit =
+    for rails <- targetRails do
+      rails.direction = onDirection
+
+  override def switchOff(context: MoveContext): Unit =
+    for rails <- targetRails do
+      rails.direction = offDirection
+
+  override def execute(context: MoveContext): Unit =
+    import context.*
+    // Prevent switching if there is any train on one the target rails
+    val blocked = universe.components[TrainPart].exists { trainPart =>
+      trainPart.position.exists(pos => targetRails.contains(pos().field))
+    }
+    if !blocked then
+      super.execute(context)
+  end execute
+end RailsSwitch
+
 class RailsLightCreator(using ComponentInit) extends ComponentCreator:
   type CreatedComponentType = RailsLight
 
@@ -158,6 +198,8 @@ class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives R
     () // disable the normal Switch behavior
 end RailsLight
 
+class TrainPart(using ComponentInit) extends PosComponent
+
 class LocomotiveCreator(using ComponentInit) extends ComponentCreator:
   type CreatedComponentType = Locomotive
 
@@ -170,7 +212,7 @@ class LocomotiveCreator(using ComponentInit) extends ComponentCreator:
     new Locomotive()
 end LocomotiveCreator
 
-class Locomotive(using ComponentInit) extends PosComponent derives Reflector:
+class Locomotive(using ComponentInit) extends TrainPart derives Reflector:
   /** The current direction. */
   var direction: Direction = Direction.North
   /** The previous direction, used to draw with the appropriate angle. */
@@ -313,7 +355,7 @@ class CarriageCreator(using ComponentInit) extends ComponentCreator:
     new Carriage()
 end CarriageCreator
 
-class Carriage(using ComponentInit) extends PosComponent derives Reflector:
+class Carriage(using ComponentInit) extends TrainPart derives Reflector:
   /** The locomotive at the head of this carriage's train. */
   var locomotive: Option[Locomotive] = None
   /** The current direction, used to draw with the appropriate angle. */
