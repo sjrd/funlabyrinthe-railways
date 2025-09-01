@@ -63,16 +63,11 @@ def withRotation(gc: GraphicsContext, center: Point2D, angle: Double)(op: => Uni
   gc.restore()
 end withRotation
 
-class RailsCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = Rails
-
+class RailsCreator(using ComponentInit) extends ComponentCreator[Rails]:
   category = ComponentCategory("rails", "Rails")
 
   icon += "Rails/Horizontal"
   icon += "Creators/Creator"
-  
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new Rails()
 end RailsCreator
 
 class Rails(using ComponentInit) extends Ground derives Reflector:
@@ -101,16 +96,11 @@ class Rails(using ComponentInit) extends Ground derives Reflector:
   }
 end Rails
 
-class RailsSwitchCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = RailsSwitch
-
+class RailsSwitchCreator(using ComponentInit) extends ComponentCreator[RailsSwitch]:
   category = ComponentCategory("rails", "Rails")
 
   icon += "Buttons/SwitchOff"
   icon += "Creators/Creator"
-
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new RailsSwitch()
 end RailsSwitchCreator
 
 /** A switch that flips the direction of a target `Rails`. */
@@ -142,16 +132,11 @@ class RailsSwitch(using ComponentInit) extends Switch derives Reflector:
   end execute
 end RailsSwitch
 
-class RailsLightCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = RailsLight
-
+class RailsLightCreator(using ComponentInit) extends ComponentCreator[RailsLight]:
   category = ComponentCategory("rails", "Rails")
 
   icon += "Rails/LightOffNorth"
   icon += "Creators/Creator"
-
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new RailsLight()
 end RailsLightCreator
 
 class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives Reflector:
@@ -200,16 +185,11 @@ end RailsLight
 
 class TrainPart(using ComponentInit) extends PosComponent
 
-class LocomotiveCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = Locomotive
-
+class LocomotiveCreator(using ComponentInit) extends ComponentCreator[Locomotive]:
   category = ComponentCategory("trains", "Trains")
 
   icon += "Trains/LocomotiveNorth"
   icon += "Creators/Creator"
-  
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new Locomotive()
 end LocomotiveCreator
 
 class Locomotive(using ComponentInit) extends TrainPart derives Reflector:
@@ -343,16 +323,11 @@ class Locomotive(using ComponentInit) extends TrainPart derives Reflector:
   end doDraw
 end Locomotive
 
-class CarriageCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = Carriage
-
+class CarriageCreator(using ComponentInit) extends ComponentCreator[Carriage]:
   category = ComponentCategory("trains", "Trains")
 
   icon += "Trains/CarriageNorth"
   icon += "Creators/Creator"
-  
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new Carriage()
 end CarriageCreator
 
 class Carriage(using ComponentInit) extends TrainPart derives Reflector:
