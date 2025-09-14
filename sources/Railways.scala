@@ -15,7 +15,7 @@ object Railways extends Module:
   override protected def createComponents()(using Universe): Unit =
     val railsCreator = new RailsCreator
     val railsSwitchCreator = new RailsSwitchCreator
-    val railsLightCreator = new RailsLightCreator
+    val timedRailsLightCreator = new TimedRailsLightCreator
     val locomotiveCreator = new LocomotiveCreator
     val carriageCreator = new CarriageCreator
   end createComponents
@@ -132,23 +132,67 @@ class RailsSwitch(using ComponentInit) extends Switch derives Reflector:
   end execute
 end RailsSwitch
 
-class RailsLightCreator(using ComponentInit) extends ComponentCreator[RailsLight]:
+/** Abstract base class for all rails lights.
+ *
+ *  Rails lights are technically *effects*, so that they can be
+ *  placed on top of rails. However, the player never executes
+ *  them, so their `execute()` method does nothing.
+ *
+ *  The main property of a rails light is `isOn`. When `true`,
+ *  the light is green, and trains are allowed to proceed.
+ *  When `false`, it is red, and trains will be stopped.
+ *
+ *  This base class contains no logic to actually change `isOn`
+ *  on its own.
+ */
+abstract class RailsLight(using ComponentInit) extends Effect derives Reflector:
+  category = ComponentCategory("rails", "Rails")
+
+  @transient
+  def offPainter: Painter = painter
+  def offPainter_=(value: Painter): Unit = painter = value
+
+  var onPainter: Painter = universe.EmptyPainter
+  var isOn: Boolean = false
+
+  offPainter +="Rails/LightOffNorth"
+  onPainter += "Rails/LightOnNorth"
+
+  override def reflect() = autoReflect[RailsLight]
+
+  override protected def doDraw(context: DrawSquareContext): Unit =
+    if isOn then
+      doDrawOn(context)
+    else
+      doDrawOff(context)
+  end doDraw
+
+  protected def doDrawOff(context: DrawSquareContext): Unit =
+    offPainter.drawTo(context)
+
+  protected def doDrawOn(context: DrawSquareContext): Unit =
+    onPainter.drawTo(context)
+
+  /** Called at the start of the game.
+   *
+   *  Subclasses may override this method to start the automatic
+   *  updates of this light. By default, it does nothing.
+   */
+  def startGame(): Unit = ()
+end RailsLight
+
+class TimedRailsLightCreator(using ComponentInit) extends ComponentCreator[TimedRailsLight]:
   category = ComponentCategory("rails", "Rails")
 
   icon += "Rails/LightOffNorth"
   icon += "Creators/Creator"
-end RailsLightCreator
+end TimedRailsLightCreator
 
-class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives Reflector:
-  category = ComponentCategory("rails", "Rails")
-
+class TimedRailsLight(using ComponentInit) extends RailsLight derives Reflector:
   var delay: Int = 0
   var delayBeforeNextLight: Int = 0
-  var nextLight: Option[RailsLight] = None
-  var mirror: Option[RailsLight] = None
-
-  offPainter = offPainter.empty + "Rails/LightOffNorth"
-  onPainter = onPainter.empty + "Rails/LightOnNorth"
+  var nextLight: Option[TimedRailsLight] = None
+  var mirror: Option[TimedRailsLight] = None
 
   @noinspect
   val turnLightOnOffQueue = TimerQueue[Boolean] { value =>
@@ -158,9 +202,9 @@ class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives R
       turnLightOff()
   }
 
-  override def reflect() = autoReflect[RailsLight]
+  override def reflect() = autoReflect[TimedRailsLight]
 
-  def startGame(): Unit =
+  override def startGame(): Unit =
     if isOn then
       turnLightOn()
   end startGame
@@ -178,10 +222,7 @@ class RailsLight(using ComponentInit) extends Switch with FrameUpdates derives R
       next.turnLightOnOffQueue.schedule(delayBeforeNextLight, true)
     mirror.foreach(_.turnLightOff())
   end turnLightOff
-
-  override def execute(context: MoveContext): Unit =
-    () // disable the normal Switch behavior
-end RailsLight
+end TimedRailsLight
 
 class TrainPart(using ComponentInit) extends PosComponent
 
