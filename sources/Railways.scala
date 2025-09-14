@@ -16,6 +16,7 @@ object Railways extends Module:
     val railsCreator = new RailsCreator
     val railsSwitchCreator = new RailsSwitchCreator
     val timedRailsLightCreator = new TimedRailsLightCreator
+    val zoneRailsLightCreator = new ZoneRailsLightCreator
     val locomotiveCreator = new LocomotiveCreator
     val carriageCreator = new CarriageCreator
   end createComponents
@@ -30,6 +31,8 @@ object Railways extends Module:
   def containingCarriage(using Universe): Attribute[Option[Carriage]] = myAttributeByID("containingCarriage")
   def railsCreator(using Universe): RailsCreator = myComponentByID("railsCreator")
   def railsSwitchCreator(using Universe): RailsSwitchCreator = myComponentByID("railsSwitchCreator")
+  def timedRailsLightCreator(using Universe): TimedRailsLightCreator = myComponentByID("timedRailsLightCreator")
+  def zoneRailsLightCreator(using Universe): ZoneRailsLightCreator = myComponentByID("zoneRailsLightCreator")
   def locomotiveCreator(using Universe): LocomotiveCreator = myComponentByID("locomotiveCreator")
   def carriageCreator(using Universe): CarriageCreator = myComponentByID("carriageCreator")
 end Railways
@@ -188,6 +191,7 @@ class TimedRailsLightCreator(using ComponentInit) extends ComponentCreator[Timed
   icon += "Creators/Creator"
 end TimedRailsLightCreator
 
+/** Rails light on a timer. */
 class TimedRailsLight(using ComponentInit) extends RailsLight derives Reflector:
   var delay: Int = 0
   var delayBeforeNextLight: Int = 0
@@ -223,6 +227,40 @@ class TimedRailsLight(using ComponentInit) extends RailsLight derives Reflector:
     mirror.foreach(_.turnLightOff())
   end turnLightOff
 end TimedRailsLight
+
+final class ZoneRailsLightCreator(using ComponentInit) extends ComponentCreator[ZoneRailsLight]:
+  category = ComponentCategory("rails", "Rails")
+
+  icon += "Rails/LightOffNorth"
+  icon += "Creators/Creator"
+end ZoneRailsLightCreator
+
+/** Rails light that watches a zone for the presence of trains. */
+class ZoneRailsLight(using ComponentInit) extends RailsLight derives Reflector:
+  var zoneMap: Option[Map] = None
+  var zoneStart: Position = Position.Zero
+  var zoneEnd: Position = Position.Zero
+
+  @noinspect
+  val updateLightQueue = TimerQueue[Unit] { value =>
+    updateLight()
+  }
+
+  override def reflect() = autoReflect[ZoneRailsLight]
+
+  def updateLight(): Unit =
+    for zoneMap <- this.zoneMap do
+      val isZoneOccupied = (zoneStart to zoneEnd).exists { pos =>
+        zoneMap.posComponentsBottomUp(pos).exists(_.isInstanceOf[TrainPart])
+      }
+      isOn = !isZoneOccupied
+
+      updateLightQueue.schedule(250, ())
+  end updateLight
+
+  override def startGame(): Unit =
+    updateLight()
+end ZoneRailsLight
 
 class TrainPart(using ComponentInit) extends PosComponent
 
