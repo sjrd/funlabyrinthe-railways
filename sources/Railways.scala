@@ -73,7 +73,7 @@ class RailsCreator(using ComponentInit) extends ComponentCreator[Rails]:
   icon += "Creators/Creator"
 end RailsCreator
 
-class Rails(using ComponentInit) extends Ground derives Reflector:
+class Rails(using ComponentInit) extends Ground:
   category = ComponentCategory("rails", "Rails")
 
   var baseField: Field = grass
@@ -81,8 +81,6 @@ class Rails(using ComponentInit) extends Ground derives Reflector:
   var isStop: Boolean = false
   var autoStart: Boolean = true
   var additionalDelay: Int = 0
-
-  override def reflect() = autoReflect[Rails]
 
   override protected def doDraw(context: DrawSquareContext): Unit =
     baseField.drawTo(context)
@@ -107,14 +105,12 @@ class RailsSwitchCreator(using ComponentInit) extends ComponentCreator[RailsSwit
 end RailsSwitchCreator
 
 /** A switch that flips the direction of a target `Rails`. */
-class RailsSwitch(using ComponentInit) extends Switch derives Reflector:
+class RailsSwitch(using ComponentInit) extends Switch:
   category = ComponentCategory("rails", "Rails")
 
   var targetRails: Option[Rails] = None
   var onDirection: Option[Direction] = None
   var offDirection: Option[Direction] = None
-
-  override def reflect() = autoReflect[RailsSwitch]
 
   override def switchOn(context: MoveContext): Unit =
     for rails <- targetRails do
@@ -148,7 +144,7 @@ end RailsSwitch
  *  This base class contains no logic to actually change `isOn`
  *  on its own.
  */
-abstract class RailsLight(using ComponentInit) extends Effect derives Reflector:
+abstract class RailsLight(using ComponentInit) extends Effect:
   category = ComponentCategory("rails", "Rails")
 
   @transient
@@ -160,8 +156,6 @@ abstract class RailsLight(using ComponentInit) extends Effect derives Reflector:
 
   offPainter +="Rails/LightOffNorth"
   onPainter += "Rails/LightOnNorth"
-
-  override def reflect() = autoReflect[RailsLight]
 
   override protected def doDraw(context: DrawSquareContext): Unit =
     if isOn then
@@ -192,7 +186,7 @@ class TimedRailsLightCreator(using ComponentInit) extends ComponentCreator[Timed
 end TimedRailsLightCreator
 
 /** Rails light on a timer. */
-class TimedRailsLight(using ComponentInit) extends RailsLight derives Reflector:
+class TimedRailsLight(using ComponentInit) extends RailsLight:
   var delay: Int = 0
   var delayBeforeNextLight: Int = 0
   var nextLight: Option[TimedRailsLight] = None
@@ -205,8 +199,6 @@ class TimedRailsLight(using ComponentInit) extends RailsLight derives Reflector:
     else
       turnLightOff()
   }
-
-  override def reflect() = autoReflect[TimedRailsLight]
 
   override def startGame(): Unit =
     if isOn then
@@ -236,7 +228,7 @@ final class ZoneRailsLightCreator(using ComponentInit) extends ComponentCreator[
 end ZoneRailsLightCreator
 
 /** Rails light that watches a zone for the presence of trains. */
-class ZoneRailsLight(using ComponentInit) extends RailsLight derives Reflector:
+class ZoneRailsLight(using ComponentInit) extends RailsLight:
   var zoneMap: Option[Map] = None
   var zoneStart: Position = Position.Zero
   var zoneEnd: Position = Position.Zero
@@ -245,8 +237,6 @@ class ZoneRailsLight(using ComponentInit) extends RailsLight derives Reflector:
   val updateLightQueue = TimerQueue[Unit] { value =>
     updateLight()
   }
-
-  override def reflect() = autoReflect[ZoneRailsLight]
 
   def updateLight(): Unit =
     for zoneMap <- this.zoneMap do
@@ -271,7 +261,7 @@ class LocomotiveCreator(using ComponentInit) extends ComponentCreator[Locomotive
   icon += "Creators/Creator"
 end LocomotiveCreator
 
-class Locomotive(using ComponentInit) extends TrainPart derives Reflector:
+class Locomotive(using ComponentInit) extends TrainPart:
   /** The current direction. */
   var direction: Direction = Direction.North
   /** The previous direction, used to draw with the appropriate angle. */
@@ -295,8 +285,6 @@ class Locomotive(using ComponentInit) extends TrainPart derives Reflector:
 
   painter += "Trains/LocomotiveNorth"
   category = ComponentCategory("trains", "Trains")
-
-  override def reflect() = autoReflect[Locomotive]
 
   def startGame(): Unit =
     position.map(_().field) match
@@ -409,7 +397,7 @@ class CarriageCreator(using ComponentInit) extends ComponentCreator[Carriage]:
   icon += "Creators/Creator"
 end CarriageCreator
 
-class Carriage(using ComponentInit) extends TrainPart derives Reflector:
+class Carriage(using ComponentInit) extends TrainPart:
   /** The locomotive at the head of this carriage's train. */
   var locomotive: Option[Locomotive] = None
   /** The current direction, used to draw with the appropriate angle. */
@@ -422,8 +410,6 @@ class Carriage(using ComponentInit) extends TrainPart derives Reflector:
   category = ComponentCategory("trains", "Trains")
 
   painter += "Trains/CarriageNorth"
-
-  override def reflect() = autoReflect[Carriage]
 
   override protected def hookEntering(context: MoveContext): Unit = {
     import context.*
