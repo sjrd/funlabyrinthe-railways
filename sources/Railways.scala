@@ -12,15 +12,6 @@ object Railways extends Module:
     val containingCarriage = newAttribute[Option[Carriage]](None)
   end preInitialize
   
-  override protected def createComponents()(using Universe): Unit =
-    val railsCreator = new RailsCreator
-    val railsSwitchCreator = new RailsSwitchCreator
-    val timedRailsLightCreator = new TimedRailsLightCreator
-    val zoneRailsLightCreator = new ZoneRailsLightCreator
-    val locomotiveCreator = new LocomotiveCreator
-    val carriageCreator = new CarriageCreator
-  end createComponents
-
   override protected def startGame()(using universe: Universe): Unit =
     for light <- universe.components[RailsLight] do
       light.startGame()
@@ -29,15 +20,16 @@ object Railways extends Module:
   end startGame
 
   def containingCarriage(using Universe): Attribute[Option[Carriage]] = myAttributeByID("containingCarriage")
-  def railsCreator(using Universe): RailsCreator = myComponentByID("railsCreator")
-  def railsSwitchCreator(using Universe): RailsSwitchCreator = myComponentByID("railsSwitchCreator")
-  def timedRailsLightCreator(using Universe): TimedRailsLightCreator = myComponentByID("timedRailsLightCreator")
-  def zoneRailsLightCreator(using Universe): ZoneRailsLightCreator = myComponentByID("zoneRailsLightCreator")
-  def locomotiveCreator(using Universe): LocomotiveCreator = myComponentByID("locomotiveCreator")
-  def carriageCreator(using Universe): CarriageCreator = myComponentByID("carriageCreator")
 end Railways
 
-export Railways.*
+export Railways.containingCarriage
+
+@definition def railsCreator(using Universe) = new RailsCreator
+@definition def railsSwitchCreator(using Universe) = new RailsSwitchCreator
+@definition def timedRailsLightCreator(using Universe) = new TimedRailsLightCreator
+@definition def zoneRailsLightCreator(using Universe) = new ZoneRailsLightCreator
+@definition def locomotiveCreator(using Universe) = new LocomotiveCreator
+@definition def carriageCreator(using Universe) = new CarriageCreator
 
 case object GoOnRails extends Ability
 
