@@ -8,21 +8,15 @@ import com.funlabyrinthe.mazes.std.*
 object Railways extends Module:
   override protected def dependsOn: Set[Module] = Set(Mazes)
 
-  override protected def preInitialize()(using Universe): Unit =
-    val containingCarriage = newAttribute[Option[Carriage]](None)
-  end preInitialize
-  
   override protected def startGame()(using universe: Universe): Unit =
     for light <- universe.components[RailsLight] do
       light.startGame()
     for locomotive <- universe.components[Locomotive] do
       locomotive.startGame()
   end startGame
-
-  def containingCarriage(using Universe): Attribute[Option[Carriage]] = myAttributeByID("containingCarriage")
 end Railways
 
-export Railways.containingCarriage
+@definition def containingCarriage(using Universe) = Attribute.create[Option[Carriage]](None)
 
 @definition def railsCreator(using Universe) = new RailsCreator
 @definition def railsSwitchCreator(using Universe) = new RailsSwitchCreator
