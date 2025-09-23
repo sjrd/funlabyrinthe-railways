@@ -346,7 +346,7 @@ class Locomotive(using ComponentInit) extends TrainPart:
 
   def playerEnteredTrain(): Unit =
     // Start the train if the current rails have !autoStart
-    
+
     if moving || startScheduled then
       // already moving or starting
       ()
@@ -392,14 +392,14 @@ class Carriage(using ComponentInit) extends TrainPart:
   var previousDirection: Direction = Direction.North
   /** Carriage that this carriage tracks. */
   var tracks: Option[Carriage] = None
-  
+
   category = ComponentCategory("trains", "Trains")
 
   painter += "Trains/CarriageNorth"
 
   override protected def hookEntering(context: MoveContext): Unit = {
     import context.*
-    
+
     locomotive match
       case None =>
         () // ok, can come into free carriage
