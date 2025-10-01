@@ -151,10 +151,10 @@ abstract class RailsLight(using ComponentInit) extends Effect:
   end doDraw
 
   protected def doDrawOff(context: DrawSquareContext): Unit =
-    offPainter.drawTo(context)
+    context.drawTiled(offPainter)
 
   protected def doDrawOn(context: DrawSquareContext): Unit =
-    onPainter.drawTo(context)
+    context.drawTiled(onPainter)
 
   /** Called at the start of the game.
    *
